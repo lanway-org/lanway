@@ -1,0 +1,148 @@
+name: Build & release client apps
+
+# Builds the Lanway client for each platform and attaches the artifacts to a
+# GitHub Release. Trigger by pushing a version tag, e.g.:
+#   git tag v1.0.0 && git push origin v1.0.0
+# or run manually from the Actions tab (workflow_dispatch) to smoke-test builds.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  XRAY_VERSION: v26.6.1
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Restore release signing (if secrets are configured)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > client/android/app/lanway-release.jks
+            {
+              echo "storeFile=lanway-release.jks"
+              echo "storePassword=$STORE_PASSWORD"
+              echo "keyPassword=$KEY_PASSWORD"
+              echo "keyAlias=$KEY_ALIAS"
+            } > client/android/key.properties
+            echo "Release signing configured."
+          else
+            echo "No signing secrets set — building with the debug fallback key."
+          fi
+      - name: Build APK
+        working-directory: client
+        run: |
+          flutter pub get
+          flutter build apk --release
+      - run: cp client/build/app/outputs/flutter-apk/app-release.apk lanway-android.apk
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with: { files: lanway-android.apk }
+      - uses: actions/upload-artifact@v4
+        with: { name: lanway-android, path: lanway-android.apk }
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Bundle Xray core
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://github.com/XTLS/Xray-core/releases/download/${env:XRAY_VERSION}/Xray-windows-64.zip" -OutFile xray.zip
+          Expand-Archive xray.zip -DestinationPath xray-tmp -Force
+          New-Item -ItemType Directory -Force -Path client/assets/bin | Out-Null
+          Copy-Item xray-tmp/xray.exe client/assets/bin/xray_windows.exe -Force
+      - name: Flutter pub get
+        working-directory: client
+        run: flutter pub get
+      - name: Patch flutter_vless_windows header (upstream packaging bug)
+        shell: pwsh
+        run: |
+          # flutter_vless_windows ships its public header under
+          # windows/include/flutter_vless/ but the generated plugin registrant
+          # includes it as flutter_vless_windows/flutter_vless_plugin.h. Mirror it
+          # to the expected location so the Windows build compiles.
+          $roots = @("$env:LOCALAPPDATA\Pub\Cache", "$env:APPDATA\Pub\Cache", $env:PUB_CACHE) | Where-Object { $_ -and (Test-Path $_) }
+          foreach ($r in $roots) {
+            $pkg = Get-ChildItem $r -Recurse -Directory -Filter "flutter_vless_windows-*" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($pkg) {
+              $src = Join-Path $pkg.FullName "windows\include\flutter_vless\flutter_vless_plugin.h"
+              $dst = Join-Path $pkg.FullName "windows\include\flutter_vless_windows"
+              if (Test-Path $src) {
+                New-Item -ItemType Directory -Force -Path $dst | Out-Null
+                Copy-Item $src (Join-Path $dst "flutter_vless_plugin.h") -Force
+                Write-Host "Patched flutter_vless_windows header at $($pkg.FullName)"
+              }
+            }
+          }
+      - name: Build Windows
+        working-directory: client
+        run: flutter build windows --release
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /O"${{ github.workspace }}" client\windows\installer.iss
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with: { files: lanway-windows-setup.exe }
+      - uses: actions/upload-artifact@v4
+        with: { name: lanway-windows-setup, path: lanway-windows-setup.exe }
+
+  windows-manager:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Restore OAuth keys (else placeholder)
+        shell: pwsh
+        env:
+          G_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          G_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          DO_ID: ${{ secrets.DIGITALOCEAN_CLIENT_ID }}
+        run: |
+          # oauth_secrets.dart is gitignored; write it from repo secrets so the
+          # one-click cloud provisioning works, else fall back to the placeholder
+          # template so the build still succeeds (manual connect only).
+          if ($env:G_ID) {
+            "const googleOAuthClientId = '$($env:G_ID)';`nconst googleOAuthClientSecret = '$($env:G_SECRET)';`nconst digitalOceanClientId = '$($env:DO_ID)';`n" | Set-Content manager/lib/oauth_secrets.dart -Encoding utf8
+            Write-Host "OAuth keys written from repository secrets."
+          } else {
+            Copy-Item manager/lib/oauth_secrets.dart.example manager/lib/oauth_secrets.dart -Force
+            Write-Host "No OAuth secrets set - using placeholder (cloud one-click disabled in this build)."
+          }
+      - name: Build Windows (manager)
+        working-directory: manager
+        run: |
+          flutter pub get
+          flutter build windows --release
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /O"${{ github.workspace }}" manager\windows\installer.iss
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with: { files: lanway-manager-windows-setup.exe }
+      - uses: actions/upload-artifact@v4
+        with: { name: lanway-manager-windows-setup, path: lanway-manager-windows-setup.exe }
+
+  # macOS is built and signed locally (CI has no Apple signing certificate):
+  #   cd client && flutter build macos --release
+  #   then package Lanway.app into a .dmg and attach it to the release.

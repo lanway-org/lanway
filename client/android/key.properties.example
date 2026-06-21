@@ -1,0 +1,9 @@
+# Copy to key.properties (gitignored) for release signing. Generate a keystore:
+#   keytool -genkeypair -v -keystore app/lanway-release.jks -keyalg RSA \
+#     -keysize 2048 -validity 10000 -alias lanway
+# Then back up the .jks + these passwords somewhere safe — losing them means you
+# can never update the app on the Play Store.
+storePassword=your-keystore-password
+keyPassword=your-key-password
+keyAlias=lanway
+storeFile=lanway-release.jks

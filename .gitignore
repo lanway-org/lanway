@@ -1,0 +1,67 @@
+# ---- Server (Go) ----
+server/lanway
+server/data/
+server/**/*.test
+*.out
+
+# ---- Bundled Xray desktop core (fetched at build, not vendored) ----
+client/assets/bin/xray_macos
+client/assets/bin/xray_windows.exe
+
+# ---- Runtime secrets / state (never commit) ----
+**/lanway.json
+**/users.json
+**/config.json
+*.pem
+*.key
+*.crt
+
+# ---- Flutter / Dart ----
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+dist/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/generated_plugin_registrant.*
+**/Flutter/ephemeral/
+**/ephemeral/
+
+# Flutter platform build dirs
+manager/macos/Pods/
+manager/windows/flutter/ephemeral/
+client/android/.gradle/
+client/android/app/debug/
+client/android/app/profile/
+client/android/app/release/
+client/ios/Pods/
+client/ios/.symlinks/
+client/macos/Pods/
+client/windows/flutter/ephemeral/
+
+# ---- Editor / OS / tooling ----
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+
+# ---- Private deploy/ops scripts (contain server host/IP — never commit) ----
+deploy-lanway.sh
+deploy*.local.sh
+setup-lanway-org.sh
+
+# ---- Secrets (OAuth client secret — never commit; use the .example template) ----
+manager/lib/oauth_secrets.dart
+
+# ---- Android signing (keystore + passwords — never commit; back these up!) ----
+client/android/key.properties
+*.jks
+*.keystore

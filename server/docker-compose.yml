@@ -1,0 +1,18 @@
+services:
+  lanway:
+    image: ghcr.io/lanway-org/lanway-server:latest
+    container_name: lanway
+    restart: always
+    ports:
+      - "443:443"   # VPN inbound (looks like normal HTTPS)
+      - "8080:8080" # management API (Bearer-token protected)
+    volumes:
+      - /opt/lanway:/config
+    environment:
+      # Injected by install.sh; the server also auto-detects on first run.
+      - LANWAY_PUBLIC_HOST=${LANWAY_PUBLIC_HOST:-}
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-qO-", "https://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

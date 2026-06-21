@@ -1,0 +1,15 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lanway logo">
+  <defs>
+    <linearGradient id="lanwayMark" x1="6" y1="42" x2="42" y2="6" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0284C7"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="12" fill="#0A1628"/>
+  <!-- An open road / path converging to a horizon: the "way" out -->
+  <path d="M10 40 L21 12 H27 L38 40" stroke="url(#lanwayMark)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Dashed centre line of the road -->
+  <path d="M24 36 L24 33 M24 28 L24 25 M24 20 L24 18" stroke="#38BDF8" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- Horizon star / freedom point -->
+  <circle cx="24" cy="11" r="2.6" fill="#E0F2FE"/>
+</svg>

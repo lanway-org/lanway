@@ -1,0 +1,17 @@
+#cloud-config
+# Lanway one-click provisioning template.
+#
+# The Manager app submits this as a droplet's user-data when creating a server
+# through a cloud provider (DigitalOcean, etc.). On first boot the droplet
+# installs Docker, deploys the Lanway container and writes the access key to a
+# file the Manager then reads back over SSH or the provider metadata API.
+package_update: true
+package_upgrade: false
+
+runcmd:
+  - export DEBIAN_FRONTEND=noninteractive
+  - curl -fsSL https://get.lanway.org -o /root/install-lanway.sh
+  - bash /root/install-lanway.sh 2>&1 | tee /root/lanway-install.log
+  # Expose the generated credentials for the Manager to retrieve.
+  - cp /opt/lanway/lanway.json /root/lanway-credentials.json
+  - chmod 600 /root/lanway-credentials.json
