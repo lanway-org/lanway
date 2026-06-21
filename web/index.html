@@ -352,26 +352,53 @@
         <p class="mt-4 text-mint/60 text-lg max-w-xl mx-auto">The client app connects you. The Manager app runs your server. Both are free.</p>
       </div>
 
-      <div class="reveal mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <a href="#" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
-          <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 13.8c0-2.5 2-3.7 2.1-3.8-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.1-2.9.9-3.6.9-.8 0-1.9-.9-3.1-.8-1.6 0-3.1.9-3.9 2.4-1.7 2.9-.4 7.2 1.2 9.5.8 1.1 1.7 2.4 3 2.4 1.2-.1 1.6-.8 3.1-.8 1.4 0 1.8.8 3.1.7 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.5-1-2.6-3.6Zm-2.4-6.7c.7-.8 1.1-2 1-3.1-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.2Z"/></svg>
-          <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">Download on</div><div class="text-white font-semibold text-sm">App Store</div></div>
-        </a>
-        <a href="#" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
-          <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.6 2.3 13 11.7l-2.5 2.5L3.6 2.3Zm-.5 1.1v17.2c0 .3.1.5.3.7l9.4-9.3L3.1 3.4Zm14.6 6.7-2.8-1.6-2.8 2.8 2.8 2.8 2.9-1.7c.9-.5.9-1.8-.1-2.3Zm-4.2 3.5-9.4 9.3c.4.2.8.1 1.2-.1l10.9-6.3-2.7-2.9Z"/></svg>
-          <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">Android</div><div class="text-white font-semibold text-sm">Download APK</div></div>
-        </a>
-        <a href="#" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
-          <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.5 4.2 3 5.5v6.2h8.5V4.2ZM3 12.3v6.2l8.5 1.3v-7.5H3Zm9.5 7.6L21 21v-8.7h-8.5v7.6ZM12.5 4l8.5-1.3v8.9h-8.5V4Z"/></svg>
-          <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">Windows</div><div class="text-white font-semibold text-sm">Download .exe</div></div>
-        </a>
-        <a href="#" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
-          <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 13.8c0-2.5 2-3.7 2.1-3.8-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.1-2.9.9-3.6.9-.8 0-1.9-.9-3.1-.8-1.6 0-3.1.9-3.9 2.4-1.7 2.9-.4 7.2 1.2 9.5.8 1.1 1.7 2.4 3 2.4 1.2-.1 1.6-.8 3.1-.8 1.4 0 1.8.8 3.1.7 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.5-1-2.6-3.6Z"/></svg>
-          <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">Download for</div><div class="text-white font-semibold text-sm">macOS</div></div>
-        </a>
+      <!-- Client app — for everyday users -->
+      <div class="reveal mt-12">
+        <div class="flex items-center justify-center gap-2 mb-1">
+          <span class="text-white font-bold text-lg">Client app</span>
+          <span class="text-mint/50 text-sm">— browse freely</span>
+        </div>
+        <p class="text-mint/50 text-sm mb-5">Install this to connect through a Lanway server.</p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <a href="https://github.com/lanway-org/lanway/releases/download/v1.0.0/lanway-android.apk" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
+            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.6 2.3 13 11.7l-2.5 2.5L3.6 2.3Zm-.5 1.1v17.2c0 .3.1.5.3.7l9.4-9.3L3.1 3.4Zm14.6 6.7-2.8-1.6-2.8 2.8 2.8 2.8 2.9-1.7c.9-.5.9-1.8-.1-2.3Zm-4.2 3.5-9.4 9.3c.4.2.8.1 1.2-.1l10.9-6.3-2.7-2.9Z"/></svg>
+            <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">Android</div><div class="text-white font-semibold text-sm">Download APK</div></div>
+          </a>
+          <a href="https://github.com/lanway-org/lanway/releases/download/v1.0.0/lanway-windows-setup.exe" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
+            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.5 4.2 3 5.5v6.2h8.5V4.2ZM3 12.3v6.2l8.5 1.3v-7.5H3Zm9.5 7.6L21 21v-8.7h-8.5v7.6ZM12.5 4l8.5-1.3v8.9h-8.5V4Z"/></svg>
+            <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">Windows</div><div class="text-white font-semibold text-sm">Installer (.exe)</div></div>
+          </a>
+          <a href="https://github.com/lanway-org/lanway/releases/download/v1.0.0/lanway-client-1.0.0-macos.dmg" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
+            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 13.8c0-2.5 2-3.7 2.1-3.8-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.1-2.9.9-3.6.9-.8 0-1.9-.9-3.1-.8-1.6 0-3.1.9-3.9 2.4-1.7 2.9-.4 7.2 1.2 9.5.8 1.1 1.7 2.4 3 2.4 1.2-.1 1.6-.8 3.1-.8 1.4 0 1.8.8 3.1.7 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.5-1-2.6-3.6Zm-2.4-6.7c.7-.8 1.1-2 1-3.1-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.2Z"/></svg>
+            <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">macOS</div><div class="text-white font-semibold text-sm">Download .dmg</div></div>
+          </a>
+          <a href="https://github.com/lanway-org/lanway/releases" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
+            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 13.8c0-2.5 2-3.7 2.1-3.8-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.1-2.9.9-3.6.9-.8 0-1.9-.9-3.1-.8-1.6 0-3.1.9-3.9 2.4-1.7 2.9-.4 7.2 1.2 9.5.8 1.1 1.7 2.4 3 2.4 1.2-.1 1.6-.8 3.1-.8 1.4 0 1.8.8 3.1.7 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.5-1-2.6-3.6Zm-2.4-6.7c.7-.8 1.1-2 1-3.1-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.2Z"/></svg>
+            <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">iOS</div><div class="text-white font-semibold text-sm">App Store soon</div></div>
+          </a>
+        </div>
       </div>
 
-      <p class="reveal mt-8 text-mint/40 text-sm">Running a node for others? Get the <a href="#" class="text-accent hover:underline font-medium">Manager app for Mac &amp; Windows →</a></p>
+      <!-- Manager app — for people running a server -->
+      <div class="reveal mt-10">
+        <div class="flex items-center justify-center gap-2 mb-1">
+          <span class="text-white font-bold text-lg">Manager app</span>
+          <span class="text-mint/50 text-sm">— run a server for others</span>
+        </div>
+        <p class="text-mint/50 text-sm mb-5">Desktop only. Create a server in one click and share access keys.</p>
+        <div class="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          <a href="https://github.com/lanway-org/lanway/releases/download/v1.0.0/lanway-manager-windows-setup.exe" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
+            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.5 4.2 3 5.5v6.2h8.5V4.2ZM3 12.3v6.2l8.5 1.3v-7.5H3Zm9.5 7.6L21 21v-8.7h-8.5v7.6ZM12.5 4l8.5-1.3v8.9h-8.5V4Z"/></svg>
+            <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">Windows</div><div class="text-white font-semibold text-sm">Installer (.exe)</div></div>
+          </a>
+          <a href="https://github.com/lanway-org/lanway/releases/download/v1.0.0/lanway-manager-1.0.0-macos.dmg" class="flex items-center gap-3 bg-navy hover:bg-navy/60 border border-white/10 hover:border-accent/40 rounded-xl px-5 py-4 transition text-left">
+            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 13.8c0-2.5 2-3.7 2.1-3.8-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.1-2.9.9-3.6.9-.8 0-1.9-.9-3.1-.8-1.6 0-3.1.9-3.9 2.4-1.7 2.9-.4 7.2 1.2 9.5.8 1.1 1.7 2.4 3 2.4 1.2-.1 1.6-.8 3.1-.8 1.4 0 1.8.8 3.1.7 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.5-1-2.6-3.6Zm-2.4-6.7c.7-.8 1.1-2 1-3.1-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.2Z"/></svg>
+            <div><div class="text-[10px] text-mint/50 uppercase tracking-wide">macOS</div><div class="text-white font-semibold text-sm">Download .dmg</div></div>
+          </a>
+        </div>
+      </div>
+
+      <p class="reveal mt-8 text-mint/40 text-sm">All builds &amp; checksums on <a href="https://github.com/lanway-org/lanway/releases" class="text-accent hover:underline font-medium">GitHub Releases →</a></p>
     </div>
   </section>
 
@@ -389,7 +416,7 @@
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
           Star on GitHub
         </a>
-        <a href="#" class="inline-flex items-center justify-center gap-2 border border-white/20 hover:border-accent hover:bg-white/5 text-white font-semibold rounded-full px-7 py-3.5 transition">Read the docs</a>
+        <a href="https://github.com/lanway-org/lanway#readme" class="inline-flex items-center justify-center gap-2 border border-white/20 hover:border-accent hover:bg-white/5 text-white font-semibold rounded-full px-7 py-3.5 transition">Read the docs</a>
       </div>
       <div class="mt-10 flex items-center justify-center gap-8 text-mint/40 text-sm">
         <span class="flex items-center gap-2"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> MIT licensed</span>
