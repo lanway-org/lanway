@@ -4,9 +4,11 @@ server/data/
 server/**/*.test
 *.out
 
-# ---- Bundled Xray desktop core (fetched at build, not vendored) ----
+# ---- Bundled desktop cores (fetched at build, not vendored) ----
 client/assets/bin/xray_macos
 client/assets/bin/xray_windows.exe
+client/assets/bin/singbox_macos
+client/assets/bin/singbox_windows.exe
 
 # ---- Runtime secrets / state (never commit) ----
 **/lanway.json
