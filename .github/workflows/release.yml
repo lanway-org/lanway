@@ -15,6 +15,9 @@ permissions:
 
 env:
   XRAY_VERSION: v26.6.1
+  # sing-box powers the desktop TUN tunnel. Pinned to the 1.11.x schema that
+  # singbox_config.dart targets — don't jump to 1.12+ without updating it.
+  SINGBOX_VERSION: 1.11.15
 
 jobs:
   android:
@@ -62,13 +65,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
-      - name: Bundle Xray core
+      - name: Bundle sing-box core (the Windows TUN engine)
         shell: pwsh
         run: |
-          Invoke-WebRequest "https://github.com/XTLS/Xray-core/releases/download/${env:XRAY_VERSION}/Xray-windows-64.zip" -OutFile xray.zip
-          Expand-Archive xray.zip -DestinationPath xray-tmp -Force
+          $sb = "sing-box-${env:SINGBOX_VERSION}-windows-amd64"
+          Invoke-WebRequest "https://github.com/SagerNet/sing-box/releases/download/v${env:SINGBOX_VERSION}/$sb.zip" -OutFile sb.zip
+          Expand-Archive sb.zip -DestinationPath sb-tmp -Force
           New-Item -ItemType Directory -Force -Path client/assets/bin | Out-Null
-          Copy-Item xray-tmp/xray.exe client/assets/bin/xray_windows.exe -Force
+          Copy-Item "sb-tmp/$sb/sing-box.exe" client/assets/bin/singbox_windows.exe -Force
       - name: Flutter pub get
         working-directory: client
         run: flutter pub get

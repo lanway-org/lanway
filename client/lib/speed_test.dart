@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'desktop_vpn.dart';
-
 /// The exit IP and where it geolocates to.
 class IpInfo {
   final String ip;
@@ -51,17 +49,11 @@ class SpeedProgress {
 }
 
 /// Measures the connection's exit IP, location, download and upload speed,
-/// emitting live progress so the UI can animate a speedometer. On desktop the
-/// requests go through the local proxy so they reflect the VPN's exit; on
-/// mobile the whole device is already tunnelled.
+/// emitting live progress so the UI can animate a speedometer. Every platform
+/// now tunnels the whole device (a TUN interface on desktop, the VPN service on
+/// mobile), so plain requests already reflect the VPN's exit.
 class SpeedTester {
-  static HttpClient _client() {
-    final c = HttpClient()..connectionTimeout = const Duration(seconds: 15);
-    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      c.findProxy = (uri) => 'PROXY 127.0.0.1:${DesktopVpn.httpPort}';
-    }
-    return c;
-  }
+  static HttpClient _client() => HttpClient()..connectionTimeout = const Duration(seconds: 15);
 
   static Future<IpInfo> _lookupIp(HttpClient c) async {
     // Must be HTTPS — iOS App Transport Security blocks plain-HTTP requests

@@ -8,11 +8,15 @@ import 'dart:convert';
 ///
 /// The outbound is parsed from the same `vless://` link the rest of the app uses,
 /// so the server side is unchanged.
-String buildSingBoxConfig(String vlessLink, {List<String> dns = const ['1.1.1.1']}) {
+String buildSingBoxConfig(String vlessLink, {List<String> dns = const ['1.1.1.1'], String? logPath}) {
   final dnsServer = dns.isNotEmpty ? dns.first : '1.1.1.1';
 
   final config = <String, dynamic>{
-    'log': {'level': 'warn', 'timestamp': true},
+    'log': {
+      'level': 'warn',
+      'timestamp': true,
+      'output': ?logPath,
+    },
     'dns': {
       // Resolve through the tunnel so DNS can't leak to the local (censored)
       // resolver.

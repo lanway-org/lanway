@@ -6,7 +6,6 @@ import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:path_provider/path_provider.dart';
 
 import 'singbox_config.dart';
-import 'vless.dart';
 
 /// Runs the VPN tunnel on desktop.
 ///
@@ -20,14 +19,10 @@ import 'vless.dart';
 /// Windows still uses the bundled Xray core as a system proxy (TUN is a separate
 /// follow-up there).
 class DesktopVpn {
-  Process? _winProc; // Windows proxy core
+  bool _winActive = false;
   bool _macActive = false;
 
-  bool get isActive => _winProc != null || _macActive;
-
-  // ── Windows proxy ports (unchanged) ───────────────────────────────────────
-  static const int socksPort = 1080;
-  static const int httpPort = 1081;
+  bool get isActive => _winActive || _macActive;
 
   // ── macOS privileged helper layout (root-owned, so it can't be tampered
   // with for a privilege-escalation). The helper runs/stops the core as root. ──
@@ -38,13 +33,13 @@ class DesktopVpn {
 
   Future<void> connect(String vlessLink, {List<String> dns = const []}) async {
     if (Platform.isMacOS) return _connectMacTun(vlessLink, dns: dns);
-    if (Platform.isWindows) return _connectWindowsProxy(vlessLink, dns: dns);
+    if (Platform.isWindows) return _connectWindowsTun(vlessLink, dns: dns);
     throw Exception('Desktop VPN is only supported on macOS and Windows.');
   }
 
   Future<void> disconnect() async {
     if (Platform.isMacOS) return _disconnectMacTun();
-    if (Platform.isWindows) return _disconnectWindowsProxy();
+    if (Platform.isWindows) return _disconnectWindowsTun();
   }
 
   // ───────────────────────────── macOS (TUN) ────────────────────────────────
@@ -164,68 +159,91 @@ case "\$1" in
 esac
 ''';
 
-  // ──────────────────────────── Windows (proxy) ─────────────────────────────
+  // ───────────────────────────── Windows (TUN) ──────────────────────────────
+  // Mirrors the macOS TUN approach with sing-box. A one-time elevated step
+  // registers a Scheduled Task that runs the core with highest privileges, so
+  // later connects/disconnects don't prompt for UAC. NOTE: this path is written
+  // blind (no Windows test environment yet) and will likely need a test-fix
+  // pass on a real Windows machine — see $_winCoreDir\\core.log to debug.
 
-  Future<void> _connectWindowsProxy(String vlessLink, {List<String> dns = const []}) async {
-    final configJson = buildClientConfig(vlessLink, dns: dns, httpInbound: true);
+  static const _winTask = 'LanwayTunnel';
+  static const _winCoreDir = r'C:\ProgramData\Lanway';
+  static const _winCore = r'C:\ProgramData\Lanway\lanway-core.exe';
+  static const _winLog = r'C:\ProgramData\Lanway\core.log';
+
+  Future<void> _connectWindowsTun(String vlessLink, {List<String> dns = const []}) async {
     final dir = await getApplicationSupportDirectory();
-    final configFile = File('${dir.path}/lanway-xray.json');
-    await configFile.writeAsString(configJson);
+    final coreSrc = await _extractWinCore(dir);
+    final configFile = File('${dir.path}\\lanway-singbox.json');
+    await configFile.writeAsString(
+      buildSingBoxConfig(vlessLink, dns: dns.isEmpty ? const ['1.1.1.1'] : dns, logPath: _winLog),
+    );
 
-    final xrayPath = await _ensureWindowsCore(dir);
-    final proc = await Process.start(xrayPath, ['run', '-config', configFile.path]);
-    _winProc = proc;
+    await _ensureWindowsHelper(coreSrc, configFile.path);
 
-    final errBuf = StringBuffer();
-    proc.stderr.transform(const SystemEncoding().decoder).listen(errBuf.write);
-    proc.stdout.drain<void>();
-
-    final early = await Future.any<int?>([
-      proc.exitCode,
-      Future<int?>.delayed(const Duration(milliseconds: 900), () => null),
-    ]);
-    if (early != null) {
-      _winProc = null;
-      throw Exception('The VPN core stopped (code $early). ${errBuf.toString().trim()}');
+    final run = await Process.run('schtasks', ['/run', '/tn', _winTask]);
+    if (run.exitCode != 0) {
+      throw Exception('Could not start the tunnel. ${run.stdout}${run.stderr}'.trim());
     }
-    await _setWindowsProxy(on: true);
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    final q = await Process.run('schtasks', ['/query', '/tn', _winTask, '/fo', 'list', '/v']);
+    if (!q.stdout.toString().toLowerCase().contains('running')) {
+      throw Exception('The tunnel did not start. See $_winCoreDir\\core.log');
+    }
+    _winActive = true;
   }
 
-  Future<void> _disconnectWindowsProxy() async {
+  Future<void> _disconnectWindowsTun() async {
     try {
-      await _setWindowsProxy(on: false);
+      await Process.run('schtasks', ['/end', '/tn', _winTask]);
     } catch (_) {/* best effort */}
-    _winProc?.kill();
-    _winProc = null;
+    _winActive = false;
   }
 
-  Future<String> _ensureWindowsCore(Directory dir) async {
-    final out = File('${dir.path}/lanway-core.exe');
-    if (!await out.exists() || (await out.length()) == 0) {
-      final data = await _loadAsset('assets/bin/xray_windows.exe');
-      await out.writeAsBytes(
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-        flush: true,
-      );
-    }
+  Future<String> _extractWinCore(Directory dir) async {
+    final out = File('${dir.path}\\lanway-core.exe');
+    final data = await _loadAsset('assets/bin/singbox_windows.exe');
+    await out.writeAsBytes(
+      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      flush: true,
+    );
     return out.path;
   }
 
-  Future<void> _setWindowsProxy({required bool on}) async {
-    const root = r'HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings';
-    Future<void> reg(List<String> args) async {
-      final res = await Process.run('reg', args);
-      if (res.exitCode != 0) {
-        throw Exception('Could not change the system proxy. ${res.stderr}');
-      }
+  /// One-time elevated setup: copy the core into a machine-wide dir and register
+  /// a highest-privileges Scheduled Task, so connecting later needs no UAC.
+  Future<void> _ensureWindowsHelper(String coreSrc, String configPath) async {
+    final probe = await Process.run('schtasks', ['/query', '/tn', _winTask]);
+    if (probe.exitCode == 0) {
+      try {
+        await File(coreSrc).copy(_winCore); // keep the installed core current
+      } catch (_) {/* in use or no perms — fine */}
+      return;
     }
 
-    if (on) {
-      await reg(['add', root, '/v', 'ProxyServer', '/t', 'REG_SZ', '/d', '127.0.0.1:$httpPort', '/f']);
-      await reg(['add', root, '/v', 'ProxyOverride', '/t', 'REG_SZ', '/d', 'localhost;127.*;<local>', '/f']);
-      await reg(['add', root, '/v', 'ProxyEnable', '/t', 'REG_DWORD', '/d', '1', '/f']);
-    } else {
-      await reg(['add', root, '/v', 'ProxyEnable', '/t', 'REG_DWORD', '/d', '0', '/f']);
+    final dir = await getApplicationSupportDirectory();
+    final ps1 = File('${dir.path}\\lanway-setup.ps1');
+    final script = "\$ErrorActionPreference = 'Stop'\n"
+        "New-Item -ItemType Directory -Force -Path '$_winCoreDir' | Out-Null\n"
+        "Copy-Item -Force '$coreSrc' '$_winCore'\n"
+        "\$action = New-ScheduledTaskAction -Execute '$_winCore' "
+        "-Argument 'run -c \"$configPath\"' -WorkingDirectory '$_winCoreDir'\n"
+        "\$principal = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -RunLevel Highest -LogonType Interactive\n"
+        "\$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries "
+        "-DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew\n"
+        "Register-ScheduledTask -TaskName '$_winTask' -Action \$action "
+        "-Principal \$principal -Settings \$settings -Force | Out-Null\n";
+    await ps1.writeAsString(script);
+
+    // Launch an elevated PowerShell (UAC once) to run the setup script.
+    final res = await Process.run('powershell', [
+      '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+      "\$p = Start-Process powershell "
+          "-ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','${ps1.path}' "
+          "-Verb RunAs -WindowStyle Hidden -PassThru -Wait; exit \$p.ExitCode",
+    ]);
+    if (res.exitCode != 0) {
+      throw Exception('Could not set up the tunnel helper. ${res.stderr}'.trim());
     }
   }
 
