@@ -36,6 +36,14 @@ func GenerateConfig(cfg *config.Config, users []*store.User) ([]byte, error) {
 	}
 
 	streamSettings := buildStreamSettings(cfg, users)
+	// TCP keepalive on accepted connections: refreshes NAT/path state so idle
+	// tunnels aren't silently dropped (the "internet goes dead until I
+	// reconnect" symptom), and lets the server detect dead peers.
+	streamSettings["sockopt"] = map[string]any{
+		"tcpKeepAliveIdle":     30,
+		"tcpKeepAliveInterval": 15,
+		"tcpNoDelay":           true,
+	}
 
 	doc := map[string]any{
 		"log": map[string]any{"loglevel": "warning"},
@@ -46,10 +54,20 @@ func GenerateConfig(cfg *config.Config, users []*store.User) ([]byte, error) {
 		"stats": map[string]any{},
 		"policy": map[string]any{
 			"levels": map[string]any{
-				"0": map[string]any{"statsUserUplink": true, "statsUserDownlink": true},
+				// connIdle raises the idle cutoff, and uplinkOnly/downlinkOnly = 0
+				// stops Xray from closing a connection shortly after one direction
+				// goes quiet — both needed so long-lived WebSockets aren't culled.
+				"0": map[string]any{
+					"statsUserUplink":   true,
+					"statsUserDownlink": true,
+					"handshake":         8,
+					"connIdle":          600,
+					"uplinkOnly":        0,
+					"downlinkOnly":      0,
+				},
 			},
 			"system": map[string]any{
-				"statsInboundUplink":  true,
+				"statsInboundUplink":   true,
 				"statsInboundDownlink": true,
 			},
 		},
@@ -73,9 +91,14 @@ func GenerateConfig(cfg *config.Config, users []*store.User) ([]byte, error) {
 					"decryption": "none",
 				},
 				"streamSettings": streamSettings,
+				// routeOnly: sniff the destination domain for routing decisions
+				// only, but still connect to the address the client gave us.
+				// Without this, Xray re-resolves the domain itself, which breaks
+				// endpoints like gateway.messenger.com (the Messenger WebSocket).
 				"sniffing": map[string]any{
 					"enabled":      true,
 					"destOverride": []string{"http", "tls", "quic"},
+					"routeOnly":    true,
 				},
 			},
 		},
