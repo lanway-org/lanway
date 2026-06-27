@@ -21,10 +21,6 @@ type ShareLinks struct {
 // the server configuration. The vless:// form is intentionally standards
 // compliant so the same key also works in other Xray clients (v2rayNG, etc.).
 func BuildLinks(cfg *config.Config, u *store.User) ShareLinks {
-	label := u.Name
-	if label == "" {
-		label = "Lanway"
-	}
 	host := cfg.PublicHost
 	port := cfg.PublicPort
 
@@ -55,6 +51,13 @@ func BuildLinks(cfg *config.Config, u *store.User) ShareLinks {
 		q.Set("pbk", cfg.Reality.PublicKey)
 		q.Set("sid", u.ShortID)
 		q.Set("fp", "chrome")
+	}
+
+	// Label the key by the server address, never the user's name — the name is
+	// only for the operator's own tracking and must not leak in a shared key.
+	label := host
+	if label == "" {
+		label = "Lanway"
 	}
 
 	vlessURL := url.URL{
