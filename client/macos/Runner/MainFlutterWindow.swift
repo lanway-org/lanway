@@ -10,6 +10,10 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
+    // Don't destroy the window when it's closed, so closing (✕) just hides it
+    // and it can be re-shown from the menu-bar app or the Dock icon.
+    self.isReleasedWhenClosed = false
+
     super.awakeFromNib()
   }
 }
