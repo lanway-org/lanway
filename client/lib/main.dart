@@ -45,7 +45,7 @@ class LanwayClientApp extends ConsumerStatefulWidget {
   ConsumerState<LanwayClientApp> createState() => _LanwayClientAppState();
 }
 
-class _LanwayClientAppState extends ConsumerState<LanwayClientApp> {
+class _LanwayClientAppState extends ConsumerState<LanwayClientApp> with WindowListener {
   final _appLinks = AppLinks();
   LanwayTray? _tray;
 
@@ -60,6 +60,10 @@ class _LanwayClientAppState extends ConsumerState<LanwayClientApp> {
   /// connection state.
   Future<void> _setupTray() async {
     if (!LanwayTray.supported) return;
+    // Closing the window hides it (the menu-bar app + VPN keep running, like
+    // Outline); a full quit happens only via the tray "Quit".
+    await windowManager.setPreventClose(true);
+    windowManager.addListener(this);
     _tray = LanwayTray(
       onOpen: () async {
         await windowManager.show();
@@ -79,7 +83,13 @@ class _LanwayClientAppState extends ConsumerState<LanwayClientApp> {
           }
         }
       },
-      onQuit: () => exit(0),
+      onQuit: () async {
+        // Outline-style: quitting from the tray stops the tunnel, then exits.
+        try {
+          await ref.read(vpnControllerProvider.notifier).disconnect();
+        } catch (_) {/* best effort */}
+        exit(0);
+      },
     );
     await _tray!.init();
     // Reflect connection state in the tray icon + menu.
@@ -91,7 +101,15 @@ class _LanwayClientAppState extends ConsumerState<LanwayClientApp> {
   @override
   void dispose() {
     _tray?.dispose();
+    if (LanwayTray.supported) windowManager.removeListener(this);
     super.dispose();
+  }
+
+  /// The window's close button (✕) hides the window instead of quitting, so the
+  /// menu-bar app and the VPN keep running. Re-open from the tray "Open".
+  @override
+  void onWindowClose() async {
+    await windowManager.hide();
   }
 
   /// Handles `lanway://add?config=…` deep links, both cold-start and while running.

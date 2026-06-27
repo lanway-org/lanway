@@ -68,6 +68,15 @@ class ServersNotifier extends StateNotifier<List<SavedServer>> {
     await _persist();
   }
 
+  /// Renames a saved server's local display label.
+  Future<void> rename(String id, String name) async {
+    state = [
+      for (final s in state)
+        if (s.id == id) SavedServer(id: s.id, name: name, link: s.link) else s,
+    ];
+    await _persist();
+  }
+
   static String _randomId() {
     final rng = Random.secure();
     return List.generate(16, (_) => rng.nextInt(16).toRadixString(16)).join();

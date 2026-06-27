@@ -67,6 +67,55 @@ class _ServerTileState extends ConsumerState<_ServerTile> {
     }
   }
 
+  Future<void> _rename() async {
+    final controller = TextEditingController(text: widget.server.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: LanwayColors.surface,
+        title: const Text('Rename server'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(hintText: _address),
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Save')),
+        ],
+      ),
+    );
+    final trimmed = name?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) {
+      await ref.read(serversProvider.notifier).rename(widget.server.id, trimmed);
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: LanwayColors.surface,
+        title: const Text('Delete this server?'),
+        content: Text('“${widget.server.name}” ($_address) will be removed from this app.',
+            style: const TextStyle(height: 1.4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: LanwayColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (yes == true) {
+      await ref.read(serversProvider.notifier).remove(widget.server.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -117,8 +166,13 @@ class _ServerTileState extends ConsumerState<_ServerTile> {
                   : const Icon(Icons.speed, color: LanwayColors.mint),
             ),
             IconButton(
+              tooltip: 'Rename',
+              onPressed: _rename,
+              icon: const Icon(Icons.edit_outlined, color: LanwayColors.mint),
+            ),
+            IconButton(
               tooltip: 'Delete',
-              onPressed: () => ref.read(serversProvider.notifier).remove(widget.server.id),
+              onPressed: _confirmDelete,
               icon: const Icon(Icons.delete_outline, color: Colors.white),
             ),
           ],
