@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_vless/flutter_vless.dart';
@@ -70,6 +71,12 @@ class VpnController extends StateNotifier<VpnState> {
       _init();
     } else if (_desktop) {
       _desktopVpn = DesktopVpn();
+      // The desktop tunnel (a separate sing-box process) can go stale after the
+      // machine sleeps or the network changes (Wi-Fi↔Ethernet), leaking traffic
+      // to the local network. Reconnect on a network change so it re-establishes
+      // its routes. connectivity_plus reports only the primary connection, so the
+      // tunnel's own interface coming up doesn't retrigger this.
+      _connSub = Connectivity().onConnectivityChanged.listen((_) => _onNetworkChange());
     }
   }
 
@@ -80,6 +87,10 @@ class VpnController extends StateNotifier<VpnState> {
   late final bool _desktop;
   Timer? _ticker;
   DateTime? _connectedAt;
+  StreamSubscription? _connSub;
+  Timer? _netDebounce;
+  List<String> _lastDns = const [];
+  bool _restarting = false;
 
   bool get _supported => _mobile || _desktop;
 
@@ -150,6 +161,7 @@ class VpnController extends StateNotifier<VpnState> {
       return;
     }
     state = state.copyWith(stage: VpnStage.connecting, server: server, clearError: true);
+    _lastDns = dns;
 
     final parsed = parseShareLink(server.link);
     if (parsed == null) {
@@ -179,6 +191,32 @@ class VpnController extends StateNotifier<VpnState> {
       );
     } catch (e) {
       state = state.copyWith(stage: VpnStage.error, error: _friendly(e));
+    }
+  }
+
+  /// A network change arrived — schedule a debounced tunnel restart (desktop
+  /// only, and only while connected) so a sleep/Wi-Fi-switch can't leave traffic
+  /// leaking to the local network.
+  void _onNetworkChange() {
+    if (!_desktop || !state.isConnected || _restarting) return;
+    _netDebounce?.cancel();
+    _netDebounce = Timer(const Duration(seconds: 3), _restartDesktopTunnel);
+  }
+
+  Future<void> _restartDesktopTunnel() async {
+    if (!_desktop || !state.isConnected || _restarting) return;
+    final server = state.server;
+    final parsed = server == null ? null : parseShareLink(server.link);
+    if (parsed == null) return;
+    _restarting = true;
+    try {
+      await _desktopVpn!.disconnect();
+      await _desktopVpn!.connect(parsed.vless, dns: _lastDns);
+    } catch (_) {
+      state = state.copyWith(
+          stage: VpnStage.error, error: 'Reconnect after a network change failed — toggle the VPN to retry.');
+    } finally {
+      _restarting = false;
     }
   }
 
@@ -236,6 +274,8 @@ class VpnController extends StateNotifier<VpnState> {
   @override
   void dispose() {
     _stopTicker();
+    _netDebounce?.cancel();
+    _connSub?.cancel();
     super.dispose();
   }
 }
